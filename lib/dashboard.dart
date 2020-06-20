@@ -1,7 +1,6 @@
-import 'dart:html';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:web/chart_widget.dart';
 
 class DashboardPage extends StatefulWidget {
   DashboardPage({Key key}) : super(key: key);
@@ -18,6 +17,7 @@ class _DashboardPageState extends State<DashboardPage> {
     // get stats
     getMemberTotal();
     getPostTotal();
+    getAdsTotal();
     getAdsPushTotal();
     getPushTotal();
   }
@@ -25,23 +25,64 @@ class _DashboardPageState extends State<DashboardPage> {
   int memberTotal = null;
   int postTotal = null;
   int adsPushTotal = null;
+  int adsTotal = null;
   int pushTotal = null;
   double screenWidth = 0;
 
+  List<UserData> chartMember = [];
+  List<UserData> chartPost = [];
+  List<UserData> chartPush = [];
+  List<UserData> chartAds = [];
+
   getMemberTotal() {
     Stream<QuerySnapshot> snapshots = Firestore.instance.collection("users").snapshots();
-    snapshots.listen((value) {
+    snapshots.listen((snapshot) {
+      int typeMember = 0;
+      int typeSponsor = 0;
+      int typeAdmin = 0;
       setState(() {
-        memberTotal = value.documents.length;
+        memberTotal = snapshot.documents.length;
+
+        snapshot.documents.forEach((doc) {
+          if ((doc['userType'] == 0) || (doc['userType'] == null)) {
+            typeMember = typeMember + 1;
+          }
+          if (doc['userType'] == 1) {
+            typeSponsor = typeSponsor + 1;
+          }
+
+          if (doc['userType'] == 2) {
+            typeAdmin = typeAdmin + 1;
+          }
+        });
+        chartMember = [];
+        chartMember.add(new UserData("Member", typeMember));
+        chartMember.add(new UserData("Advertisor", typeSponsor));
+        chartMember.add(new UserData("Admin", typeAdmin));
       });
     });
   }
 
   getPostTotal() {
     Stream<QuerySnapshot> snapshots = Firestore.instance.collection("posts").snapshots();
-    snapshots.listen((value) {
+    snapshots.listen((snapshot) {
+      int typeText = 0;
+      int typeImage = 0;
+
       setState(() {
-        postTotal = value.documents.length;
+        postTotal = snapshot.documents.length;
+
+        snapshot.documents.forEach((doc) {
+          if ((doc['postType'] == "t")) {
+            typeText = typeText + 1;
+          }
+          if (doc['postType'] == "i") {
+            typeImage = typeImage + 1;
+          }
+        });
+        chartPost = [];
+        chartPost.add(new UserData("Text", typeText));
+        chartPost.add(new UserData("Image", typeImage));
       });
     });
   }
@@ -55,11 +96,51 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  getPushTotal() {
-    Stream<QuerySnapshot> snapshots = Firestore.instance.collection("push").snapshots();
+  getAdsTotal() {
+    Stream<QuerySnapshot> snapshots = Firestore.instance.collection("ads").snapshots();
+    Stream<QuerySnapshot> snapshots2 = Firestore.instance.collection("ads_push").snapshots();
     snapshots.listen((value) {
       setState(() {
+        adsTotal = value.documents.length;
+        if (chartAds.length > 1) {
+          chartAds.removeAt(0);
+        }
+        chartAds.add(new UserData("Ads", adsTotal));
+      });
+    });
+
+    snapshots2.listen((value) {
+      setState(() {
+        adsPushTotal = value.documents.length;
+        if (chartAds.length > 1) {
+          chartAds.removeAt(1);
+        }
+        chartAds.add(new UserData("Ads Push", adsPushTotal));
+      });
+    });
+  }
+
+  getPushTotal() {
+    Stream<QuerySnapshot> snapshots = Firestore.instance.collection("ads_push").snapshots();
+    Stream<QuerySnapshot> snapshots2 = Firestore.instance.collection("push").snapshots();
+
+    snapshots.listen((value) {
+      setState(() {
+        adsTotal = value.documents.length;
+        if (chartPush.length > 1) {
+          chartPush.removeAt(0);
+        }
+        chartPush.add(new UserData("Ads Push", adsTotal));
+      });
+    });
+
+    snapshots2.listen((value) {
+      setState(() {
         pushTotal = value.documents.length;
+        if (chartPush.length > 1) {
+          chartPush.removeAt(1);
+        }
+        chartPush.add(new UserData("Push", pushTotal));
       });
     });
   }
@@ -74,7 +155,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ? ((MediaQuery.of(context).size.width / 2) - (65))
                 : (screenWidth >= 768)
                     ? ((MediaQuery.of(context).size.width / 2) - 16)
-                    : ((MediaQuery.of(context).size.width / 2) - 16),
+                    : ((MediaQuery.of(context).size.width) - 16),
         height: 132,
         padding: const EdgeInsets.all(8.0),
         child: Column(children: <Widget>[
@@ -96,7 +177,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
     DateTime timeNow = new DateTime.now();
     String last30Minutes =
         timeNow.subtract(Duration(minutes: 30)).microsecondsSinceEpoch.toString();
@@ -113,7 +193,11 @@ class _DashboardPageState extends State<DashboardPage> {
                 cardBox("Member", Icons.insert_chart, memberTotal),
                 cardBox("Post", Icons.insert_chart, postTotal),
                 cardBox("Ads", Icons.insert_chart, adsPushTotal),
-                cardBox("Push", Icons.insert_chart, pushTotal)
+                cardBox("Push", Icons.insert_chart, pushTotal),
+                ChartBox("Member", Icons.insert_chart, chartMember),
+                ChartBox("Post", Icons.insert_chart, chartPost),
+                ChartBox("Ads & Ads Push", Icons.insert_chart, chartAds),
+                ChartBox("Ads Push & Push", Icons.insert_chart, chartPush)
               ],
             ),
             Wrap(children: [
