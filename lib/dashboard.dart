@@ -211,29 +211,31 @@ class _DashboardPageState extends State<DashboardPage> {
                     return Card(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Flex(direction: Axis.vertical, children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 8.0),
-                            child: Row(children: <Widget>[
-                              Icon(Icons.people),
-                              SizedBox(width: 8.0),
-                              Text("Users in last 30 minutes")
-                            ]),
-                          ),
-                          ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: snapshot.data.documents.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              return ListTile(
-                                leading: CircleAvatar(
-                                  backgroundImage: NetworkImage(
-                                      snapshot.data.documents[index]['userAvatarImageUrl']),
-                                ),
-                                title: Text(snapshot.data.documents[index]['userName']),
-                              );
-                            },
-                          ),
-                        ]),
+                        child: Column(
+                          children: <Widget>[
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 8.0),
+                              child: Row(children: <Widget>[
+                                Icon(Icons.people),
+                                SizedBox(width: 8.0),
+                                Text("Users in last 30 minutes")
+                              ]),
+                            ),
+                            ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: snapshot.data.documents.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundImage: NetworkImage(
+                                        snapshot.data.documents[index]['userAvatarImageUrl']),
+                                  ),
+                                  title: Text(snapshot.data.documents[index]['userName']),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }
